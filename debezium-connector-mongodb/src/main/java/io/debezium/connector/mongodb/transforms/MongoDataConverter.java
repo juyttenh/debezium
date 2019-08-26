@@ -6,6 +6,7 @@
 package io.debezium.connector.mongodb.transforms;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +87,7 @@ public class MongoDataConverter {
             break;
 
         case DATE_TIME:
-            colValue = keyvalueforStruct.getValue().asDateTime().getValue();
+            colValue = new Date(keyvalueforStruct.getValue().asDateTime().getValue());
             break;
 
         case JAVASCRIPT:
@@ -116,7 +117,7 @@ public class MongoDataConverter {
             break;
 
         case TIMESTAMP:
-            colValue = keyvalueforStruct.getValue().asTimestamp().getTime();
+            colValue = new Date(1000L * keyvalueforStruct.getValue().asTimestamp().getTime());
             break;
 
         case DECIMAL128:
@@ -176,13 +177,13 @@ public class MongoDataConverter {
                             long temp = arrValue.asInt64().getValue();
                             list.add(temp);
                         } else if (arrValue.getBsonType() == BsonType.DATE_TIME && valueType == BsonType.DATE_TIME) {
-                            long temp = arrValue.asInt64().getValue();
+                            Date temp = new Date(arrValue.asInt64().getValue());
                             list.add(temp);
                         } else if (arrValue.getBsonType() == BsonType.DECIMAL128 && valueType == BsonType.DECIMAL128) {
                             String temp = arrValue.asDecimal128().getValue().toString();
                             list.add(temp);
                         } else if (arrValue.getBsonType() == BsonType.TIMESTAMP && valueType == BsonType.TIMESTAMP) {
-                            int temp = arrValue.asInt32().getValue();
+                            Date temp = new Date(1000L * arrValue.asInt32().getValue());
                             list.add(temp);
                         } else if (arrValue.getBsonType() == BsonType.BOOLEAN && valueType == BsonType.BOOLEAN) {
                             boolean temp = arrValue.asBoolean().getValue();
@@ -249,13 +250,19 @@ public class MongoDataConverter {
             break;
 
         case INT32:
-        case TIMESTAMP:
             builder.field(key, Schema.OPTIONAL_INT32_SCHEMA);
             break;
 
+        case TIMESTAMP:
+            builder.field(key, org.apache.kafka.connect.data.Timestamp.builder().optional().build());
+            break;
+
         case INT64:
-        case DATE_TIME:
             builder.field(key, Schema.OPTIONAL_INT64_SCHEMA);
+            break;
+
+        case DATE_TIME:
+            builder.field(key, org.apache.kafka.connect.data.Timestamp.builder().optional().build());
             break;
 
         case BOOLEAN:
@@ -330,15 +337,17 @@ public class MongoDataConverter {
                         case BINARY:
                             builder.field(key, SchemaBuilder.array(Schema.OPTIONAL_BYTES_SCHEMA).optional().build());
                             break;
-
                         case INT32:
-                        case TIMESTAMP:
                             builder.field(key, SchemaBuilder.array(Schema.OPTIONAL_INT32_SCHEMA).optional().build());
                             break;
-
+                        case TIMESTAMP:
+                            builder.field(key, org.apache.kafka.connect.data.Timestamp.builder().optional().build());
+                            break;
                         case INT64:
-                        case DATE_TIME:
                             builder.field(key, SchemaBuilder.array(Schema.OPTIONAL_INT64_SCHEMA).optional().build());
+                            break;
+                        case DATE_TIME:
+                            builder.field(key, org.apache.kafka.connect.data.Timestamp.builder().optional().build());
                             break;
 
                         case BOOLEAN:
